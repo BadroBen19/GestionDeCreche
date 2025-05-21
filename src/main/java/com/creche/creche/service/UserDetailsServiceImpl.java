@@ -25,9 +25,17 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé avec l'email: " + email));
 
+        if (!user.isActive()) {
+            throw new UsernameNotFoundException("Le compte utilisateur est désactivé");
+        }
+
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
+                true,   // enabled
+                true,   // accountNonExpired
+                true,   // credentialsNonExpired
+                true,   // accountNonLocked
                 mapRolesToAuthorities(user.getRoles()));
     }
 

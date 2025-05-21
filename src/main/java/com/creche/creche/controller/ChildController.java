@@ -70,44 +70,32 @@ public class ChildController {
         Optional<Child> childOpt = childService.findById(id);
         if (childOpt.isPresent()) {
             Child child = childOpt.get();
-            
-            ChildDto childDto = new ChildDto();
-            childDto.setId(child.getId());
-            childDto.setFirstName(child.getFirstName());
-            childDto.setLastName(child.getLastName());
-            childDto.setBirthDate(child.getBirthDate());
-            childDto.setMedicalNotes(child.getMedicalNotes());
-            childDto.setDietaryRestrictions(child.getDietaryRestrictions());
-            childDto.setAllergies(child.getAllergies());
-            childDto.setSpecialNeeds(child.getSpecialNeeds());
-            childDto.setEnrollmentStatus(child.getEnrollmentStatus().name());
-            
-            model.addAttribute("child", childDto);
-            model.addAttribute("parents", userService.findAll());
+            model.addAttribute("child", child);
+            model.addAttribute("availableParents", userService.findAll().stream()
+                .filter(user -> user.getRoles().stream()
+                    .anyMatch(role -> role.getName().equals("ROLE_PARENT")))
+                .toList());
             return "children/edit";
         }
         return "redirect:/children/list";
     }
     
-    @PostMapping("/edit")
-    public String updateChild(@ModelAttribute("child") ChildDto childDto) {
-        Optional<Child> childOpt = childService.findById(childDto.getId());
-        if (childOpt.isPresent()) {
-            Child child = childOpt.get();
+    @PostMapping("/edit/{id}")
+    public String updateChild(@PathVariable Long id, @ModelAttribute Child child) {
+        Optional<Child> existingChildOpt = childService.findById(id);
+        if (existingChildOpt.isPresent()) {
+            Child existingChild = existingChildOpt.get();
             
-            child.setFirstName(childDto.getFirstName());
-            child.setLastName(childDto.getLastName());
-            child.setBirthDate(childDto.getBirthDate());
-            child.setMedicalNotes(childDto.getMedicalNotes());
-            child.setDietaryRestrictions(childDto.getDietaryRestrictions());
-            child.setAllergies(childDto.getAllergies());
-            child.setSpecialNeeds(childDto.getSpecialNeeds());
+            existingChild.setFirstName(child.getFirstName());
+            existingChild.setLastName(child.getLastName());
+            existingChild.setBirthDate(child.getBirthDate());
+            existingChild.setMedicalNotes(child.getMedicalNotes());
+            existingChild.setDietaryRestrictions(child.getDietaryRestrictions());
+            existingChild.setAllergies(child.getAllergies());
+            existingChild.setSpecialNeeds(child.getSpecialNeeds());
+            existingChild.setEnrollmentStatus(child.getEnrollmentStatus());
             
-            if (childDto.getEnrollmentStatus() != null) {
-                child.setEnrollmentStatus(Child.EnrollmentStatus.valueOf(childDto.getEnrollmentStatus()));
-            }
-            
-            childService.save(child);
+            childService.save(existingChild);
         }
         return "redirect:/children/list";
     }
@@ -121,7 +109,42 @@ public class ChildController {
     
     @PostMapping("/{id}/enroll")
     public String enrollChild(@PathVariable Long id) {
-        childService.updateEnrollmentStatus(id, Child.EnrollmentStatus.ENROLLED);
+        Optional<Child> childOpt = childService.findById(id);
+        if (childOpt.isPresent()) {
+            Child child = childOpt.get();
+            child.setEnrollmentStatus(Child.EnrollmentStatus.ENROLLED);
+            childService.save(child);
+        }
         return "redirect:/children/waiting-list";
+    }
+    
+    @GetMapping("/{id}/removeParent/{parentId}")
+    public String removeParent(@PathVariable Long id, @PathVariable Long parentId) {
+        Optional<Child> childOpt = childService.findById(id);
+        Optional<User> parentOpt = userService.findById(parentId);
+        
+        if (childOpt.isPresent() && parentOpt.isPresent()) {
+            Child child = childOpt.get();
+            User parent = parentOpt.get();
+            child.getParents().remove(parent);
+            childService.save(child);
+        }
+        
+        return "redirect:/children/edit/" + id;
+    }
+    
+    @PostMapping("/addParent")
+    public String addParent(@RequestParam Long id, @RequestParam Long parentId) {
+        Optional<Child> childOpt = childService.findById(id);
+        Optional<User> parentOpt = userService.findById(parentId);
+        
+        if (childOpt.isPresent() && parentOpt.isPresent()) {
+            Child child = childOpt.get();
+            User parent = parentOpt.get();
+            child.getParents().add(parent);
+            childService.save(child);
+        }
+        
+        return "redirect:/children/edit/" + id;
     }
 }

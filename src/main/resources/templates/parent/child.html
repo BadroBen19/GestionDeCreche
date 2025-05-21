@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Présences de l'enfant - Gestion de Crèche</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .content {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Crèche Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/dashboard">Espace Parent</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>
+                            <span sec:authentication="name">parent@example.com</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">Mon profil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" class="m-0">
+                                    <button type="submit" class="dropdown-item">Déconnexion</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="bi bi-calendar-check me-2"></i> Présences de <span th:text="${child.firstName + ' ' + child.lastName}">Prénom Nom</span></h2>
+                <p class="text-muted">
+                    <span th:text="${#temporals.format(startDate, 'dd/MM/yyyy')}"></span> au 
+                    <span th:text="${#temporals.format(endDate, 'dd/MM/yyyy')}"></span>
+                </p>
+            </div>
+            <a href="/parent/dashboard" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Retour
+            </a>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <form th:action="@{/parent/children/{id}/attendance(id=${child.id})}" method="get">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="startDate" class="form-label">Date de début</label>
+                            <input type="date" id="startDate" name="startDate" class="form-control" 
+                                   th:value="${startDate}" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="endDate" class="form-label">Date de fin</label>
+                            <input type="date" id="endDate" name="endDate" class="form-control" 
+                                   th:value="${endDate}" required>
+                        </div>
+                        <div class="col-md-4 mb-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">Afficher</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Jour</th>
+                                <th>Heure d'arrivée</th>
+                                <th>Heure de départ</th>
+                                <th>Durée</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="attendance : ${attendances}">
+                                <td th:text="${#temporals.format(attendance.date, 'dd/MM/yyyy')}">01/01/2023</td>
+                                <td th:text="${#temporals.format(attendance.date, 'EEEE')}">Lundi</td>
+                                <td th:text="${attendance.arrivalTime != null ? #temporals.format(attendance.arrivalTime, 'HH:mm') : '-'}">08:30</td>
+                                <td th:text="${attendance.departureTime != null ? #temporals.format(attendance.departureTime, 'HH:mm') : '-'}">17:00</td>
+                                <td>
+                                    <span th:if="${attendance.arrivalTime != null && attendance.departureTime != null}" 
+                                        th:with="duration=${java.time.Duration.between(attendance.arrivalTime, attendance.departureTime)}"
+                                        th:text="${duration.toHours() + 'h' + (duration.toMinutes() % 60) + 'm'}">8h30m</span>
+                                    <span th:unless="${attendance.arrivalTime != null && attendance.departureTime != null}">-</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${attendances.empty}">
+                                <td colspan="5" class="text-center">Aucune présence enregistrée pour cette période</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div th:if="${!attendances.empty}" class="mt-4">
+                    <h5>Résumé</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card border-info mb-3">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Jours de présence</h6>
+                                    <p class="card-text fs-4" th:text="${attendances.size()}">15</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-success mb-3">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Heures moyennes/jour</h6>
+                                    <p class="card-text fs-4" th:with="completeDays=${attendances.?[arrivalTime != null && departureTime != null].size()},
+                                                              totalHours=${attendances.?[arrivalTime != null && departureTime != null].stream()
+                                                              .mapToLong(a -> java.time.Duration.between(a.arrivalTime, a.departureTime).toMinutes()).sum() / 60.0}"
+                                       th:text="${completeDays > 0 ? #numbers.formatDecimal(totalHours / completeDays, 1, 1) + 'h' : '-'}">8.5h</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

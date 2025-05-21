@@ -1,4 +1,3 @@
-// filepath: c:\Users\HP\Desktop\creche\src\main\java\com\creche\creche\model\User.java
 package com.creche.creche.model;
 
 import jakarta.persistence.*;
@@ -27,6 +26,9 @@ public class User {
     
     @Column
     private String phoneNumber;
+    
+    @Column(nullable = false)
+    private boolean active = true;
     
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -102,6 +104,14 @@ public class User {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+    
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
     
     // Helper methods

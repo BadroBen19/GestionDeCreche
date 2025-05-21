@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Parent - Gestion de Crèche</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .content {
+            padding: 20px;
+        }
+        .dashboard-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Crèche Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/parent/dashboard">Espace Parent</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>
+                            <span sec:authentication="name">parent@example.com</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">Mon profil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" class="m-0">
+                                    <button type="submit" class="dropdown-item">Déconnexion</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 content">
+        <div class="row mb-4">
+            <div class="col">
+                <h2><i class="bi bi-house-heart me-2"></i> Bienvenue dans votre espace parent</h2>
+                <p class="text-muted">Suivez les informations de vos enfants et communiquez avec la crèche</p>
+            </div>
+        </div>
+
+        <div th:if="${children.empty}" class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i> Vous n'avez pas encore d'enfant inscrit à la crèche.
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 col-lg-4 mb-4" th:each="child : ${children}">
+                <div class="card dashboard-card h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-person me-2"></i> <span th:text="${child.firstName + ' ' + child.lastName}">Alice Dupont</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Date de naissance :</strong> <span th:text="${#temporals.format(child.birthDate, 'dd/MM/yyyy')}">01/01/2020</span></p>
+                        <p><strong>Âge :</strong> <span th:with="age=${java.time.Period.between(child.birthDate, java.time.LocalDate.now())}" th:text="${age.years + ' ans ' + age.months + ' mois'}">3 ans 4 mois</span></p>
+                        <p>
+                            <strong>Statut :</strong> 
+                            <span th:if="${child.enrollmentStatus.name() == 'ENROLLED'}" class="badge bg-success">Inscrit</span>
+                            <span th:if="${child.enrollmentStatus.name() == 'WAITING_LIST'}" class="badge bg-warning text-dark">Liste d'attente</span>
+                            <span th:if="${child.enrollmentStatus.name() == 'INACTIVE'}" class="badge bg-secondary">Inactif</span>
+                        </p>
+                        
+                        <hr>
+                        <h6>Informations médicales</h6>
+                        <p><small><strong>Allergies :</strong> <span th:text="${child.allergies ?: 'Aucune'}">Aucune</span></small></p>
+                        <p><small><strong>Restrictions alimentaires :</strong> <span th:text="${child.dietaryRestrictions ?: 'Aucune'}">Aucune</span></small></p>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <a th:href="@{/parent/children/{id}/attendance(id=${child.id})}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-calendar3 me-1"></i> Voir les présences
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-bell me-2"></i> Notifications</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Aucune notification pour le moment.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
