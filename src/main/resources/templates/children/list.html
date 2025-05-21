@@ -1,0 +1,193 @@
+HP\Desktop\creche\src\main\resources\templates\children\list.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des enfants - Gestion de Crèche</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #f8f9fa;
+            padding: 20px 0;
+        }
+        .sidebar-link {
+            display: block;
+            padding: 10px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .sidebar-link:hover {
+            background-color: #e9ecef;
+            color: #007bff;
+        }
+        .sidebar-link.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .content {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Crèche Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Tableau de bord</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>
+                            <span>Utilisateur</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">Mon profil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" class="m-0">
+                                    <button type="submit" class="dropdown-item">Déconnexion</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="list-group">
+                    <a href="/dashboard" class="sidebar-link">
+                        <i class="bi bi-speedometer2 me-2"></i> Tableau de bord
+                    </a>
+                    <a href="/children/list" class="sidebar-link active">
+                        <i class="bi bi-people me-2"></i> Enfants
+                    </a>
+                    <a href="/children/waiting-list" class="sidebar-link">
+                        <i class="bi bi-list-check me-2"></i> Liste d'attente
+                    </a>
+                    <a href="/attendance/daily" class="sidebar-link">
+                        <i class="bi bi-calendar-check me-2"></i> Présences
+                    </a>
+                    <a href="/attendance/report" class="sidebar-link">
+                        <i class="bi bi-file-earmark-text me-2"></i> Rapports
+                    </a>
+                    <a href="/users/list" class="sidebar-link">
+                        <i class="bi bi-person me-2"></i> Utilisateurs
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 content">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="bi bi-people me-2"></i> Liste des enfants</h2>
+                    
+                    <a href="/children/register" class="btn btn-primary">
+                        <i class="bi bi-person-plus me-1"></i> Ajouter un enfant
+                    </a>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nom</th>
+                                        <th>Prénom</th>
+                                        <th>Date de naissance</th>
+                                        <th>Âge</th>
+                                        <th>Statut</th>
+                                        <th>Parents</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="child : ${children}">
+                                        <td th:text="${child.id}">1</td>
+                                        <td th:text="${child.lastName}">Dupont</td>
+                                        <td th:text="${child.firstName}">Alice</td>
+                                        <td th:text="${#temporals.format(child.birthDate, 'dd/MM/yyyy')}">01/01/2020</td>
+                                        <td th:with="age=${java.time.Period.between(child.birthDate, java.time.LocalDate.now())}" th:text="${age.years + ' ans ' + age.months + ' mois'}">3 ans 4 mois</td>
+                                        <td>
+                                            <span th:if="${child.enrollmentStatus.name() == 'ENROLLED'}" class="badge bg-success">Inscrit</span>
+                                            <span th:if="${child.enrollmentStatus.name() == 'WAITING_LIST'}" class="badge bg-warning text-dark">Liste d'attente</span>
+                                            <span th:if="${child.enrollmentStatus.name() == 'INACTIVE'}" class="badge bg-secondary">Inactif</span>
+                                        </td>
+                                        <td>
+                                            <span th:text="${child.parents.size() > 0 ? child.parents.size() : '0'}">2</span> parent(s)
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a th:href="@{/children/edit/{id}(id=${child.id})}" class="btn btn-sm btn-outline-primary me-1">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" th:data-bs-target="'#childModal' + ${child.id}">
+                                                    <i class="bi bi-info-circle"></i>
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Modal avec les détails de l'enfant -->
+                                            <div class="modal fade" th:id="'childModal' + ${child.id}" tabindex="-1" aria-labelledby="childModalLabel" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="childModalLabel" th:text="${child.firstName + ' ' + child.lastName}">Alice Dupont</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p><strong>Date de naissance:</strong> <span th:text="${#temporals.format(child.birthDate, 'dd/MM/yyyy')}">01/01/2020</span></p>
+                                                            <p><strong>Allergies:</strong> <span th:text="${child.allergies ?: 'Aucune'}">Aucune</span></p>
+                                                            <p><strong>Restrictions alimentaires:</strong> <span th:text="${child.dietaryRestrictions ?: 'Aucune'}">Aucune</span></p>
+                                                            <p><strong>Notes médicales:</strong> <span th:text="${child.medicalNotes ?: 'Aucune'}">Aucune</span></p>
+                                                            <p><strong>Besoins spécifiques:</strong> <span th:text="${child.specialNeeds ?: 'Aucun'}">Aucun</span></p>
+                                                            
+                                                            <hr>
+                                                            <h6>Parents</h6>
+                                                            <ul th:if="${!child.parents.empty}">
+                                                                <li th:each="parent : ${child.parents}" th:text="${parent.firstName + ' ' + parent.lastName + ' (' + parent.email + ')'}">John Doe (john.doe@mail.com)</li>
+                                                            </ul>
+                                                            <p th:if="${child.parents.empty}" class="text-muted">Aucun parent associé</p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                                            <a th:href="@{/children/edit/{id}(id=${child.id})}" class="btn btn-primary">Modifier</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${children.empty}">
+                                        <td colspan="8" class="text-center">Aucun enfant enregistré</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

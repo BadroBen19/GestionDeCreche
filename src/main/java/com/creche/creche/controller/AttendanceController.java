@@ -28,22 +28,23 @@ public class AttendanceController {
         this.childService = childService;
     }
     
-    @GetMapping("/daily")
-    public String dailyAttendance(
-            @RequestParam(required = false) 
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            Model model) {
-        
-        if (date == null) {
-            date = LocalDate.now();
-        }
-        
-        model.addAttribute("date", date);
-        model.addAttribute("attendances", attendanceService.findByDate(date));
-        model.addAttribute("enrolledChildren", childService.findByEnrollmentStatus(Child.EnrollmentStatus.ENROLLED));
-        
-        return "attendance/daily";
+   @GetMapping("/daily")
+public String dailyAttendance(
+        @RequestParam(required = false) 
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+        Model model) {
+    
+    if (date == null) {
+        date = LocalDate.now();
     }
+    
+    model.addAttribute("date", date);
+    model.addAttribute("attendances", attendanceService.findByDate(date));
+    model.addAttribute("enrolledChildren", childService.findByEnrollmentStatus(Child.EnrollmentStatus.ENROLLED));
+    
+    // S'assurer que ce chemin est correct
+    return "attendance/daily";  // Utilise le fichier daily.html
+}
     
     @PostMapping("/record-arrival")
     public String recordArrival(@RequestParam Long childId, 

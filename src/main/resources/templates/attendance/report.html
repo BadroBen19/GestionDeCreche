@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport de présences - Gestion de Crèche</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #f8f9fa;
+            padding: 20px 0;
+        }
+        .sidebar-link {
+            display: block;
+            padding: 10px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .sidebar-link:hover {
+            background-color: #e9ecef;
+            color: #007bff;
+        }
+        .sidebar-link.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .content {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Crèche Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Tableau de bord</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>
+                            <span>Utilisateur</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">Mon profil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" class="m-0">
+                                    <button type="submit" class="dropdown-item">Déconnexion</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="list-group">
+                    <a href="/dashboard" class="sidebar-link">
+                        <i class="bi bi-speedometer2 me-2"></i> Tableau de bord
+                    </a>
+                    <a href="/children/list" class="sidebar-link">
+                        <i class="bi bi-people me-2"></i> Enfants
+                    </a>
+                    <a href="/children/waiting-list" class="sidebar-link">
+                        <i class="bi bi-list-check me-2"></i> Liste d'attente
+                    </a>
+                    <a href="/attendance/daily" class="sidebar-link">
+                        <i class="bi bi-calendar-check me-2"></i> Présences
+                    </a>
+                    <a href="/attendance/report" class="sidebar-link active">
+                        <i class="bi bi-file-earmark-text me-2"></i> Rapports
+                    </a>
+                    <a href="/users/list" class="sidebar-link">
+                        <i class="bi bi-person me-2"></i> Utilisateurs
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 content">
+                <h2 class="mb-4"><i class="bi bi-file-earmark-text me-2"></i> Rapport de présences</h2>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Générer un rapport</h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/attendance/report}" method="get">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="childId" class="form-label">Enfant</label>
+                                    <select id="childId" name="childId" class="form-select" required>
+                                        <option value="">-- Sélectionnez un enfant --</option>
+                                        <option th:each="child : ${children}" 
+                                                th:value="${child.id}" 
+                                                th:text="${child.firstName + ' ' + child.lastName}"
+                                                th:selected="${child.id == selectedChild?.id}">Nom de l'enfant</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="startDate" class="form-label">Date de début</label>
+                                    <input type="date" id="startDate" name="startDate" class="form-control" 
+                                           th:value="${startDate}" required>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="endDate" class="form-label">Date de fin</label>
+                                    <input type="date" id="endDate" name="endDate" class="form-control" 
+                                           th:value="${endDate}" required>
+                                </div>
+                                <div class="col-md-2 mb-3 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary w-100">Générer</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Résultats du rapport -->
+                <div th:if="${selectedChild != null}" class="card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0" th:text="'Rapport pour ' + ${selectedChild.firstName} + ' ' + ${selectedChild.lastName}">Rapport pour Enfant</h5>
+                        <span class="badge bg-info text-dark" th:text="${#temporals.format(startDate, 'dd/MM/yyyy') + ' - ' + #temporals.format(endDate, 'dd/MM/yyyy')}">01/01/2023 - 31/01/2023</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Arrivée</th>
+                                        <th>Départ</th>
+                                        <th>Durée</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="attendance : ${attendances}">
+                                        <td th:text="${#temporals.format(attendance.date, 'dd/MM/yyyy')}">01/01/2023</td>
+                                        <td th:text="${attendance.arrivalTime != null ? #temporals.format(attendance.arrivalTime, 'HH:mm') : '-'}">08:30</td>
+                                        <td th:text="${attendance.departureTime != null ? #temporals.format(attendance.departureTime, 'HH:mm') : '-'}">17:00</td>
+                                        <td>
+                                            <span th:if="${attendance.arrivalTime != null && attendance.departureTime != null}" 
+                                                th:with="duration=${java.time.Duration.between(attendance.arrivalTime, attendance.departureTime)}"
+                                                th:text="${duration.toHours() + 'h' + (duration.toMinutes() % 60) + 'm'}">8h30m</span>
+                                            <span th:unless="${attendance.arrivalTime != null && attendance.departureTime != null}">-</span>
+                                        </td>
+                                        <td th:text="${attendance.notes ?: '-'}">-</td>
+                                    </tr>
+                                    <tr th:if="${attendances == null || attendances.empty}">
+                                        <td colspan="5" class="text-center">Aucune présence enregistrée pour cette période</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div th:if="${attendances != null && !attendances.empty}" class="mt-3">
+                            <h6>Statistiques</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="card border-info mb-3">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">Jours de présence</h6>
+                                            <p class="card-text fs-4" th:text="${attendances.size()}">5</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card border-success mb-3">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">Heures moyennes par jour</h6>
+                                            <p class="card-text fs-4" th:with="completeDays=${attendances.?[arrivalTime != null && departureTime != null].size()},
+                                                                              totalHours=${attendances.?[arrivalTime != null && departureTime != null].stream()
+                                                                              .mapToLong(a -> java.time.Duration.between(a.arrivalTime, a.departureTime).toMinutes()).sum() / 60.0}"
+                                               th:text="${completeDays > 0 ? #numbers.formatDecimal(totalHours / completeDays, 1, 1) + 'h' : '-'}">8.5h</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
